@@ -1,7 +1,7 @@
-use day_1::part1;
+use {{crate_name}}::part1;
 
 fn main() {
-    let result = part1(include_str!("../input.txt")).expect("Part 1 failed to run");
+    let result = part1(include_str!("../../input.txt")).expect("Part 1 failed to run");
 
     println!("{result}");
 }
@@ -18,7 +18,7 @@ mod tests {
     #[rstest]
     #[case(0)]
     fn test_using_test_input_1(#[case] expected: u64) {
-        let result = part1(include_str!("../test-1.txt")).expect("Part 1 failed to run");
+        let result = part1(include_str!("../../test-1.txt")).expect("Part 1 failed to run");
 
         assert_eq!(expected, result);
     }
