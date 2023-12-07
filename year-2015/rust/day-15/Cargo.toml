@@ -8,6 +8,7 @@ default-run = "main"
 
 [dependencies]
 anyhow.workspace = true
+nom.workspace = true
 
 [dev-dependencies]
 rstest.workspace = true
