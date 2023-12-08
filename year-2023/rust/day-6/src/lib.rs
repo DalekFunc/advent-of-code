@@ -1,4 +1,4 @@
-use anyhow::{anyhow, Result};
+use anyhow::Result;
 use nom::{
     bytes::complete::tag,
     character::complete::{self, line_ending, space0, space1},
