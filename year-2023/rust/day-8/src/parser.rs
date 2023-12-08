@@ -1,11 +1,8 @@
 use std::collections::HashMap;
 
 use nom::{
-    bytes::complete::{tag, take_while1},
-    character::{
-        complete::{alpha1, line_ending},
-        is_alphabetic,
-    },
+    bytes::complete::tag,
+    character::complete::{alpha1, line_ending, alphanumeric1},
     multi::separated_list1,
     sequence::{delimited, separated_pair},
     IResult,
@@ -13,18 +10,20 @@ use nom::{
 
 fn parse_direction(input: &str) -> IResult<&str, (&str, &str, &str)> {
     let (rest, (from, (left, right))) = separated_pair(
-        alpha1,
+        alphanumeric1,
         tag(" = "),
         delimited(
             tag("("),
-            separated_pair(alpha1, tag(", "), alpha1),
+            separated_pair(alphanumeric1, tag(", "), alphanumeric1),
             tag(")"),
         ),
     )(input)?;
     Ok((rest, (from, left, right)))
 }
 
-pub fn parse_document(input: &str) -> IResult<&str, (&str, HashMap<&str, &str>, HashMap<&str, &str>)> {
+pub fn parse_document(
+    input: &str,
+) -> IResult<&str, (&str, HashMap<&str, &str>, HashMap<&str, &str>)> {
     let (rest, (instructions, directions)) = separated_pair(
         alpha1,
         tag("\n\n"),
@@ -44,13 +43,11 @@ pub fn parse_document(input: &str) -> IResult<&str, (&str, HashMap<&str, &str>, 
 
 #[cfg(test)]
 mod tests {
-    use rstest::rstest;
 
     use super::*;
 
     #[test]
-    fn quick_test() {
-    }
+    fn quick_test() {}
 
     #[test]
     fn test_parsing() {
