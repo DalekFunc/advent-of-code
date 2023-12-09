@@ -1,0 +1,10 @@
+Sue 1: goldfish: 9, cars: 0, samoyeds: 9
+Sue 2: perfumes: 5, trees: 8, goldfish: 8
+Sue 3: pomeranians: 2, akitas: 1, trees: 5
+Sue 4: goldfish: 10, akitas: 2, perfumes: 9
+Sue 5: cars: 5, perfumes: 6, akitas: 9
+Sue 6: goldfish: 10, cats: 9, cars: 8
+Sue 7: trees: 2, samoyeds: 7, goldfish: 10
+Sue 8: cars: 8, perfumes: 6, goldfish: 1
+Sue 9: cats: 4, pomeranians: 0, trees: 0
+Sue 10: trees: 2, children: 10, samoyeds: 10
