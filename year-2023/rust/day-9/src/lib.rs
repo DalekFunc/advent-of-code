@@ -1,3 +1,4 @@
+// region:    --- Modules
 use anyhow::Result;
 use math::ncr;
 use nom::{
@@ -6,25 +7,15 @@ use nom::{
     multi::separated_list1,
     IResult,
 };
-
 mod math;
+// endregion: --- Modules
 
 pub fn part1(input: &str) -> Result<i64> {
     let list_of_numbers = parse_file(input);
 
     Ok(list_of_numbers
         .into_iter()
-        .map(|numbers| {
-            println!(
-                "{}",
-                numbers
-                    .iter()
-                    .map(|n| n.to_string())
-                    .collect::<Vec<_>>()
-                    .join(", ")
-            );
-            extrapolate(&numbers)
-        })
+        .map(|numbers| extrapolate(&numbers))
         .sum())
 }
 
@@ -33,17 +24,7 @@ pub fn part2(input: &str) -> Result<i64> {
 
     Ok(list_of_numbers
         .into_iter()
-        .map(|numbers| {
-            println!(
-                "{}",
-                numbers
-                    .iter()
-                    .map(|n| n.to_string())
-                    .collect::<Vec<_>>()
-                    .join(", ")
-            );
-            extrapolate_backward(&numbers)
-        })
+        .map(|numbers| extrapolate_backward(&numbers))
         .sum())
 }
 
@@ -72,6 +53,7 @@ where
 
     iter.all(|elem| elem == first_elem)
 }
+
 fn find_seeds(numbers: &[i64]) -> Vec<i64> {
     assert!(numbers.len() > 1);
 
@@ -113,12 +95,14 @@ fn extrapolate(numbers: &[i64]) -> i64 {
 // endregion: --- Part 1
 
 // region:    --- Part 2
+
 fn extrapolate_backward(numbers: &[i64]) -> i64 {
     let mut seeds = find_seeds(numbers);
     seeds.reverse();
 
     seeds.into_iter().reduce(|acc, rhs| rhs - acc).unwrap()
 }
+
 // endregion: --- Part 2
 
 #[cfg(test)]
@@ -129,10 +113,10 @@ mod tests {
 
     #[test]
     fn quick_test() {
-        // let (_, numbers) = parse_line("10 13 16 21 30 45").expect("parse successful");
-        // println!("{:?}", find_seeds(&numbers));
-        // let (_, numbers) = parse_line("22 31 52 90 144 206 260 281 234 73 -260 -836 -1740 -3072 -4948 -7501 -10882 -15261 -20828 -27794 -36392").expect("parse successful");
-        // println!("{:?}", find_seeds(&numbers));
+        let (_, numbers) = parse_line("10 13 16 21 30 45").expect("parse successful");
+        println!("{:?}", find_seeds(&numbers));
+        let (_, numbers) = parse_line("22 31 52 90 144 206 260 281 234 73 -260 -836 -1740 -3072 -4948 -7501 -10882 -15261 -20828 -27794 -36392").expect("parse successful");
+        println!("{:?}", find_seeds(&numbers));
         let (_, numbers) = parse_line("12 18 39 90 199 424 889 1853 3829 7788 15539 30516 59516 116587 231569 468274 961829 1992697 4128498 8487217 17211396").expect("parse successful");
         let n_len = numbers.len();
         println!("{n_len}");
@@ -162,6 +146,10 @@ mod tests {
     #[case(vec![0, 3], "0 3 6 9 12 15")]
     #[case(vec![1, 2, 1], "1 3 6 10 15 21")]
     #[case(vec![10, 3, 0, 2], "10 13 16 21 30 45")]
+    #[case(vec![12, 6, 15, 15, 13, 17, 19, 14, 3, 15, 23, 23, 20, 17, 4, 2, 3, -4], "12 18 39 90 199 424 889 1853 3829 7788 15539 30516 59516 116587 231569 468274 961829 1992697")]
+    #[case(vec![12, 6, 15, 15, 13, 17, 19, 14, 3, 15, 23, 23, 20, 17, 4, 2, 3, -4], "12 18 39 90 199 424 889 1853 3829 7788 15539 30516 59516 116587 231569 468274 961829 1992697 4128498")]
+    #[case(vec![12, 6, 15, 15, 13, 17, 19, 14, 3, 15, 23, 23, 20, 17, 4, 2, 3, -4], "12 18 39 90 199 424 889 1853 3829 7788 15539 30516 59516 116587 231569 468274 961829 1992697 4128498 8487217")]
+    #[case(vec![12, 6, 15, 15, 13, 17, 19, 14, 3, 15, 23, 23, 20, 17, 4, 2, 3, -4], "12 18 39 90 199 424 889 1853 3829 7788 15539 30516 59516 116587 231569 468274 961829 1992697 4128498 8487217 17211396")]
     fn test_find_seed_and_diff(#[case] expected: Vec<i64>, #[case] input: &str) {
         let (_, numbers) = parse_line(input).expect("parse successful");
         assert_eq!(expected, find_seeds(&numbers));
@@ -177,10 +165,10 @@ mod tests {
     #[case(153, "15 38 84")]
     #[case(-27, "-6 -7 -8 -9 -10 -11 -12 -13 -14 -15 -16 -17 -18 -19 -20 -21 -22 -23 -24 -25 -26
     ")]
-    #[case(34298953, "12 18 39 90 199 424 889 1853 3829 7788 15539 30516 59516 116587 231569 468274 961829 1992697 4128498 8487217 17211396")]
-    #[case(17211396, "12 18 39 90 199 424 889 1853 3829 7788 15539 30516 59516 116587 231569 468274 961829 1992697 4128498 8487217")]
-    #[case(8487217, "12 18 39 90 199 424 889 1853 3829 7788 15539 30516 59516 116587 231569 468274 961829 1992697 4128498")]
     #[case(4128498, "12 18 39 90 199 424 889 1853 3829 7788 15539 30516 59516 116587 231569 468274 961829 1992697")]
+    #[case(8487217, "12 18 39 90 199 424 889 1853 3829 7788 15539 30516 59516 116587 231569 468274 961829 1992697 4128498")]
+    #[case(17211396, "12 18 39 90 199 424 889 1853 3829 7788 15539 30516 59516 116587 231569 468274 961829 1992697 4128498 8487217")]
+    #[case(34298953, "12 18 39 90 199 424 889 1853 3829 7788 15539 30516 59516 116587 231569 468274 961829 1992697 4128498 8487217 17211396")]
     #[case(18, "0 3 6 9 12 15")]
     #[case(28, "1 3 6 10 15 21")]
     #[case(68, "10 13 16 21 30 45")]
