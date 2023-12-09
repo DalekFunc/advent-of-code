@@ -1,9 +1,9 @@
 // region:    --- Modules
-use anyhow::{anyhow, Result};
+use anyhow::Result;
 use itertools::Itertools;
 use nom::{
     branch::alt,
-    bytes::complete::{tag, take_while1},
+    bytes::complete::tag,
     character::complete::{self, alpha1, line_ending},
     combinator::map,
     multi::separated_list1,
@@ -28,8 +28,6 @@ pub fn part1(input: &str) -> Result<i32> {
         })
         .collect::<Vec<_>>();
 
-    // dbg!(&sitting_cycles);
-
     Ok(sitting_cycles
         .iter()
         .map(|cycle| {
@@ -39,7 +37,6 @@ pub fn part1(input: &str) -> Result<i32> {
                 .sum();
             sum += rel_map[cycle[0]][cycle[cycle.len() - 1]]
                 + rel_map[cycle[cycle.len() - 1]][cycle[0]];
-            dbg!(&sum);
 
             sum
         })
@@ -54,21 +51,16 @@ pub fn part2(input: &str) -> Result<i32> {
     let sitting_cycles = people
         .iter()
         .cloned()
-        .permutations(people.len() - 1)
+        .permutations(people.len())
         .collect::<Vec<_>>();
-
-    // dbg!(&sitting_cycles);
 
     Ok(sitting_cycles
         .iter()
         .map(|cycle| {
-            dbg!(&cycle);
             let sum = cycle
                 .windows(2)
                 .map(|pair| rel_map[pair[0]][pair[1]] + rel_map[pair[1]][pair[0]])
                 .sum();
-            dbg!(&sum);
-
             sum
         })
         .max()
@@ -116,8 +108,6 @@ fn parse_relationships(input: &str) -> IResult<&str, RelationshipMap> {
 
 #[cfg(test)]
 mod tests {
-    use rstest::rstest;
-
     use super::*;
 
     #[test]
