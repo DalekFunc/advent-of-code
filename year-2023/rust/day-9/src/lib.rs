@@ -1,4 +1,4 @@
-use anyhow::{anyhow, Result};
+use anyhow::Result;
 use math::ncr;
 use nom::{
     character::complete::{self, line_ending, space1},
@@ -28,8 +28,23 @@ pub fn part1(input: &str) -> Result<i64> {
         .sum())
 }
 
-pub fn part2(_input: &str) -> Result<i64> {
-    Ok(0)
+pub fn part2(input: &str) -> Result<i64> {
+    let list_of_numbers = parse_file(input);
+
+    Ok(list_of_numbers
+        .into_iter()
+        .map(|numbers| {
+            println!(
+                "{}",
+                numbers
+                    .iter()
+                    .map(|n| n.to_string())
+                    .collect::<Vec<_>>()
+                    .join(", ")
+            );
+            extrapolate_backward(&numbers)
+        })
+        .sum())
 }
 
 // region:    --- Parsing
@@ -98,7 +113,12 @@ fn extrapolate(numbers: &[i64]) -> i64 {
 // endregion: --- Part 1
 
 // region:    --- Part 2
+fn extrapolate_backward(numbers: &[i64]) -> i64 {
+    let mut seeds = find_seeds(numbers);
+    seeds.reverse();
 
+    seeds.into_iter().reduce(|acc, rhs| rhs - acc).unwrap()
+}
 // endregion: --- Part 2
 
 #[cfg(test)]

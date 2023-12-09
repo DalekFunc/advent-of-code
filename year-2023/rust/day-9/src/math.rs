@@ -1,5 +1,4 @@
 pub fn factorial(n: u64) -> u64 {
-    assert!(n >= 0);
     if n == 0 {
         return 1;
     }
