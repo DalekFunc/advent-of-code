@@ -1,4 +1,7 @@
+use core::{num, panic};
+
 use anyhow::{anyhow, Result};
+use itertools::Itertools;
 
 pub fn part1(input: &[u8]) -> Result<u64> {
     let grid: Vec<&[u8]> = input.split(|b| *b == NEWLINE).collect();
@@ -23,8 +26,366 @@ pub fn part1(input: &[u8]) -> Result<u64> {
     Ok(steps / 2)
 }
 
+fn is_zero_or_odd(num: usize) -> bool {
+    num % 2 == 1
+}
+
 pub fn part2(input: &[u8]) -> Result<u64> {
-    Err(anyhow!("Not Implemented."))
+    let grid: Vec<&[u8]> = input.split(|b| *b == NEWLINE).collect();
+    let row_bound = grid.len();
+    let col_bound = grid[0].len();
+
+    let start_coord = find_start(&grid);
+
+    let mut cur = start_coord;
+    let mut from = None;
+    let mut loop_coords = vec![];
+
+    loop {
+        loop_coords.push(cur);
+        let (new_cur, new_from) = walk(&grid, cur, from, row_bound, col_bound);
+        cur = new_cur;
+        from = Some(new_from);
+        if cur == start_coord {
+            break;
+        }
+    }
+
+    // let grid: Vec<&[u8]> = include_bytes!("../test-4-2.txt")
+    //     .split(|b| *b == NEWLINE)
+    //     .collect();
+    let grid: Vec<&[u8]> = include_bytes!("../input-2.txt")
+        .split(|b| *b == NEWLINE)
+        .collect();
+
+    // find all cells in grid which has odd intersections with loop cells in any direction;
+    let mut count = 0;
+    for row in 0..row_bound {
+        for col in 0..col_bound {
+            // not on loop
+            // if row != 4 || col != 7 {
+            //     continue;
+            // }
+
+            if loop_coords.contains(&(row, col)) {
+                continue;
+            }
+
+            if (0..row).map(|row| grid[row][col]).all_equal() {
+                continue;
+            };
+            if (row + 1..row_bound).map(|row| grid[row][col]).all_equal() {
+                continue;
+            };
+            if (0..col).map(|col| grid[row][col]).all_equal() {
+                continue;
+            };
+            if (col + 1..col_bound).map(|col| grid[row][col]).all_equal() {
+                continue;
+            };
+
+            println!("{}, {}", row, col);
+
+            // top
+            // filter and count all same col, diff row < self.row
+            // if odd continue, +1
+            let mut num_of_odd_dir = true;
+
+            // we track F and then L for up
+            //
+            if !is_zero_or_odd(
+                (0..row)
+                    .filter_map(|row| {
+                        if loop_coords.contains(&(row, col)) {
+                            Some((row, col))
+                        } else {
+                            None
+                        }
+                    })
+                    // track FJ or 7L
+                    .scan(None, |state, new_coord @ (row, col)| match state {
+                        Some(F) => {
+                            if grid[row][col] == J {
+                                *state = None;
+                                Some(true)
+                            } else if grid[row][col] == L {
+                                *state = None;
+                                Some(false)
+                            } else {
+                                Some(false)
+                            }
+                        }
+                        Some(C7) => {
+                            if grid[row][col] == L {
+                                *state = None;
+                                Some(true)
+                            } else if grid[row][col] == J {
+                                *state = None;
+                                Some(false)
+                            } else {
+                                Some(false)
+                            }
+                        }
+                        Some(_) => {
+                            panic!("!!")
+                        }
+                        None => match grid[row][col] {
+                            F => {
+                                *state = Some(F);
+                                Some(false)
+                            }
+                            J => {
+                                panic!("J")
+                            }
+                            C7 => {
+                                *state = Some(C7);
+                                Some(false)
+                            }
+                            L => {
+                                panic!("L")
+                            }
+                            PIPE => {
+                                panic!("|")
+                            }
+                            DASH => Some(true),
+                            _ => {
+                                panic!("imp")
+                            }
+                        },
+                    })
+                    .filter(|v| *v)
+                    .count(),
+            ) {
+                // if row == 6 {
+                // println!("up");
+                // dbg!("!");
+                // }
+                num_of_odd_dir = false;
+            }
+
+            // down
+            if row + 1 != row_bound {
+                if !is_zero_or_odd(
+                    (row + 1..row_bound)
+                        .filter_map(|row| {
+                            if loop_coords.contains(&(row, col)) {
+                                Some((row, col))
+                            } else {
+                                None
+                            }
+                        })
+                        // .map(|v| dbg!(v))
+                        .scan(None, |state, new_coord @ (row, col)| match state {
+                            Some(F) => {
+                                if grid[row][col] == J {
+                                    *state = None;
+                                    Some(true)
+                                } else if grid[row][col] == L {
+                                    *state = None;
+                                    Some(false)
+                                } else {
+                                    Some(false)
+                                }
+                            }
+                            Some(C7) => {
+                                if grid[row][col] == L {
+                                    *state = None;
+                                    Some(true)
+                                } else if grid[row][col] == J {
+                                    *state = None;
+                                    Some(false)
+                                } else {
+                                    Some(false)
+                                }
+                            }
+                            Some(_) => {
+                                panic!("!!")
+                            }
+                            None => match grid[row][col] {
+                                F => {
+                                    *state = Some(F);
+                                    Some(false)
+                                }
+                                J => {
+                                    panic!("J")
+                                }
+                                C7 => {
+                                    *state = Some(C7);
+                                    Some(false)
+                                }
+                                L => {
+                                    panic!("L")
+                                }
+                                PIPE => {
+                                    panic!("|")
+                                }
+                                DASH => Some(true),
+                                _ => {
+                                    panic!("imp")
+                                }
+                            },
+                        })
+                        .filter(|v| *v)
+                        .count(),
+                ) {
+                    // if row == 6 {
+                    // dbg!("!");
+                    // println!("down");
+                    // }
+                    num_of_odd_dir = false;
+                }
+            }
+
+            // left
+            if !is_zero_or_odd(
+                (0..col)
+                    .filter_map(|col| {
+                        if loop_coords.contains(&(row, col)) {
+                            Some((row, col))
+                        } else {
+                            None
+                        }
+                    })
+                    .scan(None, |state, new_coord @ (row, col)| match state {
+                        Some(F) => {
+                            if grid[row][col] == J {
+                                *state = None;
+                                Some(true)
+                            } else if grid[row][col] == C7 {
+                                *state = None;
+                                Some(false)
+                            } else {
+                                Some(false)
+                            }
+                        }
+                        Some(L) => {
+                            if grid[row][col] == C7 {
+                                *state = None;
+                                Some(true)
+                            } else if grid[row][col] == J {
+                                *state = None;
+                                Some(false)
+                            } else {
+                                Some(false)
+                            }
+                        }
+                        Some(_) => {
+                            panic!("!!")
+                        }
+                        None => match grid[row][col] {
+                            F => {
+                                *state = Some(F);
+                                Some(false)
+                            }
+                            J => {
+                                panic!("J")
+                            }
+                            C7 => {
+                                panic!("C7")
+                            }
+                            L => {
+                                *state = Some(L);
+                                Some(false)
+                            }
+                            PIPE => Some(true),
+                            DASH => {
+                                panic!("imp")
+                            }
+                            _ => {
+                                panic!("imp")
+                            }
+                        },
+                    })
+                    .filter(|v| *v)
+                    .count(),
+            ) {
+                // if row == 6 {
+                // println!("left");
+                // dbg!("!");
+                // }
+                num_of_odd_dir = false;
+            }
+
+            // right
+            if col + 1 != col_bound {
+                if !is_zero_or_odd(
+                    (col + 1..col_bound)
+                        .filter_map(|col| {
+                            if loop_coords.contains(&(row, col)) {
+                                Some((row, col))
+                            } else {
+                                None
+                            }
+                        })
+                        .scan(None, |state, new_coord @ (row, col)| match state {
+                            Some(F) => {
+                                if grid[row][col] == J {
+                                    *state = None;
+                                    Some(true)
+                                } else if grid[row][col] == C7 {
+                                    *state = None;
+                                    Some(false)
+                                } else {
+                                    Some(false)
+                                }
+                            }
+                            Some(L) => {
+                                if grid[row][col] == C7 {
+                                    *state = None;
+                                    Some(true)
+                                } else if grid[row][col] == J {
+                                    *state = None;
+                                    Some(false)
+                                } else {
+                                    Some(false)
+                                }
+                            }
+                            Some(_) => {
+                                panic!("!!")
+                            }
+                            None => match grid[row][col] {
+                                F => {
+                                    *state = Some(F);
+                                    Some(false)
+                                }
+                                J => {
+                                    panic!("J")
+                                }
+                                C7 => {
+                                    panic!("C7")
+                                }
+                                L => {
+                                    *state = Some(L);
+                                    Some(false)
+                                }
+                                PIPE => Some(true),
+                                DASH => panic!("|"),
+                                _ => {
+                                    panic!("imp")
+                                }
+                            },
+                        })
+                        .filter(|v| *v)
+                        .count(),
+                ) {
+                    // if row == 6 {
+                    // println!("right");
+                    // dbg!("!");
+                    // }
+                    num_of_odd_dir = false;
+                }
+            }
+
+            if num_of_odd_dir {
+                dbg!(num_of_odd_dir);
+                println!("{}, {}", row, col);
+
+                count += 1;
+            }
+        }
+    }
+
+    Ok(count)
 }
 
 const NEWLINE: u8 = b'\n';
