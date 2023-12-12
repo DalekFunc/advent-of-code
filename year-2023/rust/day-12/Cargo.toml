@@ -8,6 +8,8 @@ default-run = "main"
 
 [dependencies]
 anyhow.workspace = true
+itertools = "0.12.0"
+nom.workspace = true
 
 [dev-dependencies]
 rstest.workspace = true
