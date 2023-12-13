@@ -19,7 +19,56 @@ pub fn part1(input: &[u8]) -> Result<u64> {
 }
 
 pub fn part2(input: &[u8]) -> Result<u64> {
-    Err(anyhow!("Not Implemented."))
+    let (_, maps) = parse_file(input).expect("parse file ok");
+
+    Ok(maps
+        .iter()
+        .enumerate()
+        .map(|(id, m)| {
+            let orig_hori = find_horizontal_mirror(m);
+            let orig_vert = find_vertical_mirror(m);
+
+            let mut map: Vec<Vec<u8>> = m.iter().map(|&line| line.to_owned()).collect();
+
+            for row in 0..map.len() {
+                for col in 0..map[0].len() {
+                    toggle(&mut map, row, col);
+                    let ref_map: Vec<&[u8]> = map.iter().map(|line| line.as_ref()).collect();
+
+                    let new_hori = find_horizontal_mirrors(&ref_map)
+                        .into_iter()
+                        .find(|&m| m != orig_hori.unwrap_or(usize::MAX));
+                    let new_vert = find_vertical_mirrors(&ref_map)
+                        .into_iter()
+                        .find(|&m| m != orig_vert.unwrap_or(usize::MAX));
+
+                    if (new_hori.is_some() || new_vert.is_some())
+                        && (new_hori, new_vert) != (orig_hori, orig_vert)
+                    {
+                        let Some(new_hori) = new_hori else {
+                            return new_vert.unwrap();
+                        };
+
+                        let Some(new_vert) = new_vert else {
+                            return new_hori * 100;
+                        };
+
+                        return if Some(new_hori) == orig_hori {
+                            new_vert
+                        } else {
+                            new_hori * 100
+                        };
+                    }
+
+                    toggle(&mut map, row, col);
+                }
+            }
+
+            // println!("{id}");
+            panic!("should always find one smudge")
+            // 0
+        })
+        .sum::<usize>() as u64)
 }
 
 // region:    --- Parsing
@@ -35,7 +84,6 @@ fn parse_file(input: &[u8]) -> IResult<&[u8], Vec<Map>> {
 // endregion: --- Parsing
 
 // region:    --- Part 1
-
 fn find_horizontal_mirror(map: &[&[u8]]) -> Option<usize> {
     for mirror in 1..map.len() {
         if mirror <= map.len() / 2 {
@@ -46,19 +94,17 @@ fn find_horizontal_mirror(map: &[&[u8]]) -> Option<usize> {
             {
                 return Some(mirror);
             }
-        } else {
-            if map[mirror * 2 - map.len()..mirror]
-                .iter()
-                .zip(map[mirror..].iter().rev())
-                // .map(|v| {
-                //     dbg!(std::str::from_utf8(v.0).unwrap());
-                //     dbg!(std::str::from_utf8(v.1).unwrap());
-                //     v
-                // })
-                .all(|(x, y)| x == y)
-            {
-                return Some(mirror);
-            }
+        } else if map[mirror * 2 - map.len()..mirror]
+            .iter()
+            .zip(map[mirror..].iter().rev())
+            // .map(|v| {
+            //     dbg!(std::str::from_utf8(v.0).unwrap());
+            //     dbg!(std::str::from_utf8(v.1).unwrap());
+            //     v
+            // })
+            .all(|(x, y)| x == y)
+        {
+            return Some(mirror);
         }
     }
 
@@ -87,8 +133,44 @@ fn find_vertical_mirror(map: &Map) -> Option<usize> {
 
     find_horizontal_mirror(&ref_map)
 }
-
 // endregion: --- Part 1
+
+// region:    --- Part 2
+
+fn toggle(map: &mut [Vec<u8>], row: usize, col: usize) {
+    match map[row][col] {
+        b'.' => map[row][col] = b'#',
+        b'#' => map[row][col] = b'.',
+        _ => panic!("imp byte"),
+    }
+}
+
+fn find_horizontal_mirrors(map: &[&[u8]]) -> Vec<usize> {
+    (1..map.len())
+        .filter(|&mirror| {
+            if mirror <= map.len() / 2 {
+                map[..mirror]
+                    .iter()
+                    .zip(map[mirror..mirror * 2].iter().rev())
+                    .all(|(x, y)| x == y)
+            } else {
+                map[mirror * 2 - map.len()..mirror]
+                    .iter()
+                    .zip(map[mirror..].iter().rev())
+                    .all(|(x, y)| x == y)
+            }
+        })
+        .collect()
+}
+
+fn find_vertical_mirrors(map: &Map) -> Vec<usize> {
+    let map = rotate(map);
+    let ref_map: Vec<&[u8]> = map.iter().map(|line| line.as_ref()).collect();
+
+    find_horizontal_mirrors(&ref_map)
+}
+
+// endregion: --- Part 2
 
 #[cfg(test)]
 mod tests {
