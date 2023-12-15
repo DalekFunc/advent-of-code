@@ -6,7 +6,7 @@ use nom::bytes::complete::tag;
 use nom::multi::separated_list1;
 use nom::IResult;
 use itertools::Itertools;
-
+use std::collections::HashMap;
 pub fn part1(input: &[u8]) -> Result<u64> {
     let (_, input) = parse_map(input).expect("parse ok");
 
@@ -70,25 +70,36 @@ pub fn part2(input: &[u8]) -> Result<u64> {
             grid.0[idx+1][to_col+1] = input[from_row][idx].into();
         }
     }
-    println!("{}", grid);
+    // println!("{}", grid);
 
-    for cycle_count in 0..100 {
-        dbg!(cycle_count);
+    let mut patterns = HashMap::new();
+    let mut cycle = 0;
+    let mut cycle_end = 0;
+    for cycle_count in 1..=1000000000 {
+        // dbg!(cycle_count);
         grid.cycle();
-        println!("{}", grid);
-    }
 
+        // let summary = grid.summary();
 
-    let mut score = 0;
-    for row in 0..grid.0.len() {
-        score += grid.0[row].iter().fold((0, 1), |(acc, point), &elem|{ if elem == Rock::Round {
-            (acc + point, point + 1)
+        if patterns.contains_key(&grid) {
+            cycle_end = cycle_count;
+            cycle = cycle_count - patterns.get(&grid).expect("pattern exists");
+            break;
         } else {
-            (acc, point + 1)
-        }}).0;
-    }
+            patterns.insert(grid.clone(), cycle_count);
+        }
+        // println!("{}", grid);
 
-    Ok(score)
+    }
+    dbg!(cycle_end);
+    //
+    dbg!(cycle);
+    let cycle_begin = cycle_end - cycle;
+    dbg!(cycle_begin + (1000000000 - cycle_end) % cycle);
+
+    let end_grid = patterns.iter().filter(|(grid, c)| **c == cycle_begin + (1000000000 - cycle_end) % cycle).exactly_one().expect("!").0;
+
+    Ok(end_grid.score())
 }
 
 // region:    --- Parsing
@@ -100,7 +111,7 @@ fn parse_map(input: &[u8]) -> IResult<&[u8], Map> {
 
 // endregion: --- Parsing
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq,PartialOrd, Ord)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq,PartialOrd, Ord, Hash)]
 enum Rock {
     Empty,
     Round,
@@ -129,6 +140,7 @@ impl std::fmt::Display for Rock {
     }
 }
 
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 struct Grid(Vec<Vec<Rock>>);
 
 impl Grid {
@@ -167,6 +179,19 @@ impl Grid {
         self.rotate(); //east
         self.rolling();
         self.rotate(); // back to north
+    }
+
+    // for part 2 only
+    fn score(&self) -> u64 {
+        let mut score = 0;
+        for row in 0..self.0.len() {
+            score += self.0[row].iter().fold((0, 0), |(acc, point), &elem|{ if elem == Rock::Round {
+                (acc + point, point + 1)
+            } else {
+                (acc, point + 1)
+            }}).0;
+        }
+        score
     }
 }
 
