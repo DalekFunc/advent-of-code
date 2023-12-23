@@ -8,6 +8,7 @@ default-run = "main"
 
 [dependencies]
 anyhow.workspace = true
+cached = "0.46.1"
 itertools.workspace = true
 nom.workspace = true
 rayon.workspace = true
