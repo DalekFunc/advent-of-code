@@ -58,12 +58,11 @@ pub fn part2(input: &[u8]) -> Result<u64> {
             .collect::<Vec<Ray>>(),
     );
 
-    Ok(
-        initial_rays.into_iter().map(|ray|
-            simulate(ray, &map)
-        ).max().expect("max should exist")
-    )
-
+    Ok(initial_rays
+        .into_iter()
+        .map(|ray| simulate(ray, &map))
+        .max()
+        .expect("max should exist"))
 }
 
 fn parse_map(input: &[u8]) -> IResult<&[u8], Map> {

@@ -1,11 +1,11 @@
 #![allow(unused)]
 
-use anyhow::{Result, anyhow};
+use anyhow::{anyhow, Result};
+use itertools::Itertools;
 use nom::bytes::complete::is_a;
 use nom::bytes::complete::tag;
 use nom::multi::separated_list1;
 use nom::IResult;
-use itertools::Itertools;
 use std::collections::HashMap;
 pub fn part1(input: &[u8]) -> Result<u64> {
     let (_, input) = parse_map(input).expect("parse ok");
@@ -24,8 +24,10 @@ pub fn part1(input: &[u8]) -> Result<u64> {
     let mut score = 0;
     // println!("{}", grid);
     for row in 0..grid.0.len() {
-        let mut positions = grid.0[row].iter().positions(|&rock| rock == Rock::Cube).collect_vec();
-
+        let mut positions = grid.0[row]
+            .iter()
+            .positions(|&rock| rock == Rock::Cube)
+            .collect_vec();
 
         grid.0[row][0..positions[0]].sort();
         for (&from, &to) in positions.iter().tuple_windows() {
@@ -34,15 +36,19 @@ pub fn part1(input: &[u8]) -> Result<u64> {
             }
         }
 
-        score += grid.0[row].iter().fold((0, 1), |(acc, point), &elem|{ if elem == Rock::Round {
-            (acc + point, point + 1)
-        } else {
-            (acc, point + 1)
-        }}).0;
+        score += grid.0[row]
+            .iter()
+            .fold((0, 1), |(acc, point), &elem| {
+                if elem == Rock::Round {
+                    (acc + point, point + 1)
+                } else {
+                    (acc, point + 1)
+                }
+            })
+            .0;
     }
     // println!("{}", grid);
     // println!("{}", score);
-
 
     Ok(score)
 }
@@ -56,7 +62,7 @@ pub fn part2(input: &[u8]) -> Result<u64> {
 
     // fill first and last column with Cube
     for row in 0..grid_height {
-        grid.0[row][grid_width-1] = Rock::Cube;
+        grid.0[row][grid_width - 1] = Rock::Cube;
     }
     for row in 0..grid_height {
         grid.0[row][0] = Rock::Cube;
@@ -67,7 +73,7 @@ pub fn part2(input: &[u8]) -> Result<u64> {
 
     for (to_col, from_row) in (0..input.len()).rev().enumerate() {
         for idx in 0..input[0].len() {
-            grid.0[idx+1][to_col+1] = input[from_row][idx].into();
+            grid.0[idx + 1][to_col + 1] = input[from_row][idx].into();
         }
     }
     // println!("{}", grid);
@@ -89,7 +95,6 @@ pub fn part2(input: &[u8]) -> Result<u64> {
             patterns.insert(grid.clone(), cycle_count);
         }
         // println!("{}", grid);
-
     }
     dbg!(cycle_end);
     //
@@ -97,7 +102,12 @@ pub fn part2(input: &[u8]) -> Result<u64> {
     let cycle_begin = cycle_end - cycle;
     dbg!(cycle_begin + (1000000000 - cycle_end) % cycle);
 
-    let end_grid = patterns.iter().filter(|(grid, c)| **c == cycle_begin + (1000000000 - cycle_end) % cycle).exactly_one().expect("!").0;
+    let end_grid = patterns
+        .iter()
+        .filter(|(grid, c)| **c == cycle_begin + (1000000000 - cycle_end) % cycle)
+        .exactly_one()
+        .expect("!")
+        .0;
 
     Ok(end_grid.score())
 }
@@ -111,7 +121,7 @@ fn parse_map(input: &[u8]) -> IResult<&[u8], Map> {
 
 // endregion: --- Parsing
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq,PartialOrd, Ord, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 enum Rock {
     Empty,
     Round,
@@ -131,12 +141,15 @@ impl From<u8> for Rock {
 
 impl std::fmt::Display for Rock {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
-
-        write!(f, "{}", match self {
-            Rock::Cube => "#",
-            Rock::Round => "O",
-            Rock::Empty => "."
-        })
+        write!(
+            f,
+            "{}",
+            match self {
+                Rock::Cube => "#",
+                Rock::Round => "O",
+                Rock::Empty => ".",
+            }
+        )
     }
 }
 
@@ -158,8 +171,10 @@ impl Grid {
 
     fn rolling(&mut self) {
         for row in 0..self.0.len() {
-            let mut positions = self.0[row].iter().positions(|&rock| rock == Rock::Cube).collect_vec();
-
+            let mut positions = self.0[row]
+                .iter()
+                .positions(|&rock| rock == Rock::Cube)
+                .collect_vec();
 
             self.0[row][0..positions[0]].sort();
             for (&from, &to) in positions.iter().tuple_windows() {
@@ -185,11 +200,16 @@ impl Grid {
     fn score(&self) -> u64 {
         let mut score = 0;
         for row in 0..self.0.len() {
-            score += self.0[row].iter().fold((0, 0), |(acc, point), &elem|{ if elem == Rock::Round {
-                (acc + point, point + 1)
-            } else {
-                (acc, point + 1)
-            }}).0;
+            score += self.0[row]
+                .iter()
+                .fold((0, 0), |(acc, point), &elem| {
+                    if elem == Rock::Round {
+                        (acc + point, point + 1)
+                    } else {
+                        (acc, point + 1)
+                    }
+                })
+                .0;
         }
         score
     }
@@ -205,7 +225,7 @@ impl std::fmt::Display for Grid {
         }
         Ok(())
     }
-    }
+}
 
 #[cfg(test)]
 mod tests {

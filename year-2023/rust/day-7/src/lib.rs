@@ -303,9 +303,7 @@ impl Hand<Rank2> {
                 if card == Rank2::Jack {
                     return false;
                 }
-                slice
-                    .iter()
-                    .all(|rhs| CompareMethod::compare(&card, rhs))
+                slice.iter().all(|rhs| CompareMethod::compare(&card, rhs))
             }
 
             match hand {

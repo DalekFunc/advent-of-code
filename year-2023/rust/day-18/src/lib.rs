@@ -183,10 +183,10 @@ pub fn part2(input: &str) -> Result<u64> {
         .count();
 
     let corner_turn_left_up = instructions
-    .iter()
-    .tuple_windows()
-    .filter(|(l, r)| l.0 == Direction::Left && r.0 == Direction::Up)
-    .count();
+        .iter()
+        .tuple_windows()
+        .filter(|(l, r)| l.0 == Direction::Left && r.0 == Direction::Up)
+        .count();
 
     dbg!(edges);
     dbg!(corner_turn_up_left);
@@ -203,8 +203,8 @@ fn neighbours(pos: Coord, max: usize) -> Vec<Coord> {
     let left = (pos.1 != 0).then(|| (pos.0, pos.1 - 1));
     let right = (pos.1 != max - 1).then(|| (pos.0, pos.1 + 1));
 
-    let nbrs = vec![up, down, left, right];
-    nbrs.into_iter()
+    [up, down, left, right]
+        .into_iter()
         .filter(Option::is_some)
         .map(Option::unwrap)
         .collect()
