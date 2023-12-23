@@ -8,11 +8,11 @@ default-run = "main"
 
 [dependencies]
 anyhow.workspace = true
-cached = "0.46.1"
+cached.workspace = true
 itertools.workspace = true
 nom.workspace = true
 rayon.workspace = true
-rstest_reuse = "0.6.0"
+rstest_reuse.workspace = true
 
 [dev-dependencies]
 rstest.workspace = true
