@@ -1,5 +1,4 @@
 // region:    --- Modules
-#![allow(unused)]
 #![allow(unstable_name_collisions)]
 use anyhow::Result;
 use cached::proc_macro::cached;
@@ -7,8 +6,6 @@ use itertools::Itertools;
 use parser::{parse_line, parse_line2};
 use std::iter;
 use token::Token;
-
-use crate::token::print_tokens;
 // endregion: --- Modules
 
 mod cacher;
@@ -33,8 +30,6 @@ pub fn part2(input: &str) -> Result<u64> {
         .split("\n")
         .map(|line| {
             let (_, (tokens, seq)) = parse_line2(line).expect("parse correct");
-            // dbg!(&seq);
-            // dbg!(print_tokens(&tokens));
 
             // expand space
             let tokens = iter::repeat(tokens)
@@ -43,9 +38,6 @@ pub fn part2(input: &str) -> Result<u64> {
                 .flatten()
                 .collect_vec();
             let seq = iter::repeat(seq).take(5).flatten().collect_vec();
-
-            // dbg!(print_tokens(&tokens));
-            // dbg!(&seq);
 
             combinations(tokens, seq)
         })
@@ -174,140 +166,9 @@ fn constrainted_arrangement(space: &[u8], arrangement: &[u32]) -> u64 {
 }
 // endregion: --- Part 1
 
-// region:    --- Part 2 (old)
-fn all_permutations_of_gears(input: &[u8]) -> Vec<Vec<u8>> {
-    if input.is_empty() {
-        vec![]
-    } else if input.len() == 1 {
-        match input[0] {
-            b'.' => vec![vec![b'.']],
-            b'#' => vec![vec![b'#']],
-            b'?' => vec![vec![b'.'], vec![b'#']],
-            _ => panic!("imp char"),
-        }
-    } else {
-        match input[0] {
-            b'.' => all_permutations_of_gears(&input[1..])
-                .into_iter()
-                .map(|mut bytes| {
-                    bytes.insert(0, b'.');
-                    bytes
-                })
-                .collect(),
-            b'#' => all_permutations_of_gears(&input[1..])
-                .into_iter()
-                .map(|mut bytes| {
-                    bytes.insert(0, b'#');
-                    bytes
-                })
-                .collect(),
-            b'?' => {
-                let mut vec = all_permutations_of_gears(&input[1..])
-                    .into_iter()
-                    .map(|mut bytes| {
-                        bytes.insert(0, b'.');
-                        bytes
-                    })
-                    .collect::<Vec<_>>();
-
-                vec.extend(
-                    all_permutations_of_gears(&input[1..])
-                        .into_iter()
-                        .map(|mut bytes| {
-                            bytes.insert(0, b'#');
-                            bytes
-                        })
-                        .collect::<Vec<_>>(),
-                );
-                vec
-            }
-            _ => panic!("imp char"),
-        }
-    }
-}
-
-fn fulfill(input: &[u8], arrangement: &[u32]) -> bool {
-    let counts: Vec<u32> = input
-        .split(|&b| b == b'.')
-        .filter(|bytes| bytes.len() > 0)
-        .map(|bytes| bytes.len() as u32)
-        .collect();
-
-    counts.len() == arrangement.len() && counts.iter().zip(arrangement).all(|(lhs, rhs)| lhs == rhs)
-}
-
-fn possible_arrangement_5(input: &str) -> u64 {
-    let (_, (space, arrangement)) = parse_line(input).expect("parse correct");
-
-    let mut new_space = Vec::new();
-    new_space.extend_from_slice(&space);
-    new_space.extend_from_slice(&[b'?']);
-    new_space.extend_from_slice(&space);
-    new_space.extend_from_slice(&[b'?']);
-    new_space.extend_from_slice(&space);
-    new_space.extend_from_slice(&[b'?']);
-    new_space.extend_from_slice(&space);
-    new_space.extend_from_slice(&[b'?']);
-    new_space.extend_from_slice(&space);
-
-    let mut new_arrangement = Vec::new();
-    new_arrangement.extend_from_slice(&arrangement);
-    new_arrangement.extend_from_slice(&arrangement);
-    new_arrangement.extend_from_slice(&arrangement);
-    new_arrangement.extend_from_slice(&arrangement);
-    new_arrangement.extend_from_slice(&arrangement);
-
-    constrainted_arrangement(&new_space, &new_arrangement)
-}
-// endregion: --- Part 2 (old)
-
 // region:    --- Part 2
-// Candy twisting
-// match max
-// Trimming
-// Caching
-// Early termination if can’t
-
-// TODO:
-// update match to match some simply begin with ? case
-// update candy twist for simple case that max_len_block is pinned on one side
-// cached version of find...
-// ??????..#?#?#?????  1,1,1,5,2,1
-// ??????      -> try  1            (failed, not enough rest)
-// ??????      -> try  1, 1         (failed, not enough rest)
-// ??????      -> try  1, 1, 1
-// ??????      -> try  1, 1, 1, 5   failed (not enough sp)
-
-// #[case("???.###.???..??? 1,3,3,1")]
-// #[case("???.???.???.????..###.???..??? 3,3,3,3")]
-// #[case("???.###.#?#..??? 3,1,1")]
-
-// the current impl of try candy twisting fails with this case
-
-// fn combinations(tokens: &[Token], seq: &[u8]) -> u64 {
-//     if let Some(subproblems) = try_candy_twisting(tokens, seq) {
-//         subproblems
-//             .into_iter()
-//             .map(|(tokens, seq)| combinations(tokens, seq))
-//             .product()
-//     } else if let Some(subproblems) = try_candy_twisting_uncertain(tokens, seq) {
-//         subproblems
-//             .into_iter()
-//             .map(|(tokens, seq)| combinations(tokens, seq))
-//             .product()
-//     } else {
-//         // perform matching and trimming front and back.
-//         let (tokens, seq) = simplify(tokens, seq);
-
-//         find_arrangement(tokens, seq)
-//     }
-// }
-
 #[cached]
 fn combinations(tokens: Vec<Token>, seq: Vec<u8>) -> u64 {
-    // println!("{} {:?}", print_tokens(&tokens), seq);
-    // dbg!(&seq);
-
     let (tokens, seq) = simplify(&tokens, &seq);
 
     let result = match (tokens.is_empty(), seq.is_empty()) {
@@ -326,9 +187,6 @@ fn combinations(tokens: Vec<Token>, seq: Vec<u8>) -> u64 {
                 match tokens.len() {
                     0 => unreachable!(),
                     1 => {
-                        // ?
-                        assert!(*tokens == [Token::Uncertain]);
-
                         if seq == [1] {
                             1
                         } else {
@@ -342,8 +200,6 @@ fn combinations(tokens: Vec<Token>, seq: Vec<u8>) -> u64 {
             }
         }
     };
-
-    // dbg!(result);
 
     result
 }
@@ -377,59 +233,50 @@ fn available_spaces(tokens: &[Token], length: usize) -> Vec<usize> {
     positions
 }
 
-// ??.?###?...?? max is 3
-//    ^^^
-//    123     3 entry points
 fn twist<'a>(tokens: &'a [Token], seq: &'a [u8]) -> u64 {
     // get first max
     let (twist_at_seq, max) = first_max(seq);
+
     // find available spaces indexes in tokens
-    // allocate first max to available spaces
     let positions = available_spaces(tokens, max as usize);
-    // dbg!(&positions);
 
+    // allocate first max to available spaces
     // this way we only create 2 subproblems for each allocation
-    positions.iter().map(|&pos|
-        // make sure that before/behind max substitution, the token is not a block
-         {
-         
-        let before: Option<usize> = pos.checked_sub(1);
-        let behind = if pos + (max as usize) < tokens.len() { Some(pos + max as usize) } else {None} ;
-        let intermediate_result = if before.is_some() && tokens[before.unwrap()].is_block() {
-            // dbg!("before is a block");
-            0
-        } else if behind.is_some() && tokens[behind.unwrap()].is_block() {
-            // dbg!("after is a block");
-            0
-
-        } else {
-            // dbg!("neither");
-
-            let pre = if let Some(before) = before {
-                tokens[..before].to_owned()
+    positions
+        .iter()
+        .map(|&pos| {
+            // make sure that before/behind max substitution, the token is not a block
+            let before: Option<usize> = pos.checked_sub(1);
+            let behind = if pos + (max as usize) < tokens.len() {
+                Some(pos + max as usize)
             } else {
-                tokens[..pos].to_owned()
+                None
+            };
+            let intermediate_result = if before.is_some() && tokens[before.unwrap()].is_block() {
+                0
+            } else if behind.is_some() && tokens[behind.unwrap()].is_block() {
+                0
+            } else {
+                let pre = if let Some(before) = before {
+                    tokens[..before].to_owned()
+                } else {
+                    tokens[..pos].to_owned()
+                };
+
+                let post = if let Some(behind) = behind {
+                    tokens[behind + 1..].to_owned()
+                } else {
+                    tokens[pos + max as usize..].to_owned()
+                };
+
+                // go back to combinations for subproblems
+                combinations(pre, seq[..twist_at_seq].to_owned())
+                    * combinations(post, seq[twist_at_seq + 1..].to_owned())
             };
 
-            let post = if let Some(behind) = behind {
-                tokens[behind + 1..].to_owned()
-            } else {
-                tokens[pos + max as usize..].to_owned()
-            };
-
-            // dbg!(&pre, &post, &seq[..twist_at_seq],&seq[twist_at_seq + 1 ..] );
-
-            // go back to combinations for subproblems
-            combinations(pre, seq[..twist_at_seq].to_owned()) * combinations(post, seq[twist_at_seq + 1 ..].to_owned())
-
-        };
-
-        // dbg!(pos, intermediate_result);
-        intermediate_result
-        }
-
-    )
-    .sum::<u64>()
+            intermediate_result
+        })
+        .sum::<u64>()
 }
 
 fn longest_substring_by(tokens: &[Token], predicate: impl Fn(&Token) -> bool) -> usize {
@@ -452,169 +299,6 @@ fn longest_substring_of_block(tokens: &[Token]) -> usize {
 
 fn longest_substring_of_nonempty(tokens: &[Token]) -> usize {
     longest_substring_by(tokens, |token| !token.is_empty())
-}
-
-// give the slice start and end of long blocks
-fn positions_of_sequence_of_block(tokens: &[Token], block_len: usize) -> Vec<(usize, usize)> {
-    tokens
-        .iter()
-        .chain(iter::once(&Token::Empty))
-        .enumerate()
-        .fold(
-            (false, 0, None, vec![]),
-            |(_prev, count, block_start, mut acc), (pos, elem)| match elem {
-                Token::Block => {
-                    if block_start.is_some() {
-                        (true, count + 1, block_start, acc)
-                    } else {
-                        (true, 1, Some(pos), acc)
-                    }
-                }
-                _ => {
-                    if count == block_len {
-                        (false, 0, None, {
-                            acc.push((block_start.expect("start"), pos));
-                            acc
-                        })
-                    } else {
-                        (false, 0, None, acc)
-                    }
-                }
-            },
-        )
-        .3
-}
-
-// Returns longest len and max of seq
-fn can_candy_twist(tokens: &[Token], seq: &[u8]) -> Option<(usize, u8)> {
-    let unique_seq = seq.iter().unique().collect_vec();
-    if unique_seq.len() < 1 {
-        return None;
-    }
-
-    let mut sorted_seq = unique_seq.into_iter().sorted().rev();
-    let max = sorted_seq.next().expect("max").clone();
-    // let _max_2nd = sorted_seq.next().expect("max2nd").clone();
-
-    let longest_block_len = longest_substring_of_block(tokens);
-
-    if longest_block_len == max as usize {
-        Some((longest_block_len, max))
-    } else {
-        None
-    }
-}
-
-fn try_candy_twisting<'a>(
-    tokens: &'a [Token],
-    seq: &'a [u8],
-) -> Option<Vec<(&'a [Token], &'a [u8])>> {
-    can_candy_twist(tokens, seq).and_then(|(block_len, max)| {
-        let subseq = seq.split(|&num| num == max).collect_vec();
-
-        // ??.?###?.?? max is 3 ---> ??..###..??
-        //                           ^^       ^^
-        let positions = positions_of_sequence_of_block(tokens, block_len);
-        let mut subtokens = vec![];
-        if positions[0].0 > 1 {
-            // println!("..");
-            subtokens.push(&tokens[..positions[0].0 - 1]);
-        } else {
-            // println!("...");
-            subtokens.push(&[]);
-        }
-        for (left, right) in positions.iter().tuple_windows() {
-            if left.1 + 1 > right.0 - 1 {
-                // println!("!!");
-                subtokens.push(&[]);
-            } else {
-                // println!("!!!");
-
-                subtokens.push(&tokens[left.1 + 1..right.0 - 1]);
-            }
-        }
-        if positions.last().expect("last position").1 < tokens.len() - 1 {
-            // println!("!!!!");
-
-            subtokens.push(&tokens[positions.last().expect("last position").1 + 1..]);
-        } else {
-            // println!("!!!!!!");
-
-            subtokens.push(&[]);
-        }
-
-        // dbg!(&subseq);
-        // dbg!(&subtokens);
-        assert_eq!(subseq.len(), subtokens.len());
-
-        Some(subtokens.into_iter().zip(subseq.into_iter()).collect_vec())
-    })
-}
-
-// Returns longest len and max of seq
-fn can_candy_twist_uncertain(tokens: &[Token], seq: &[u8]) -> Option<(usize, u8)> {
-    let unique_seq = seq.iter().unique().collect_vec();
-    if unique_seq.len() < 1 {
-        return None;
-    }
-
-    let mut sorted_seq = unique_seq.into_iter().sorted().rev();
-    let max = sorted_seq.next().expect("max").clone();
-    // let _max_2nd = sorted_seq.next().expect("max2nd").clone();
-
-    let longest_block_len = longest_substring_of_nonempty(tokens);
-
-    if longest_block_len == max as usize {
-        Some((longest_block_len, max))
-    } else {
-        None
-    }
-}
-
-fn try_candy_twisting_uncertain<'a>(
-    tokens: &'a [Token],
-    seq: &'a [u8],
-) -> Option<Vec<(&'a [Token], &'a [u8])>> {
-    can_candy_twist_uncertain(tokens, seq).and_then(|(block_len, max)| {
-        let subseq = seq.split(|&num| num == max).collect_vec();
-
-        // ??.?###?.?? max is 3 ---> ??..###..??
-        //                           ^^       ^^
-        let positions = positions_of_sequence_of_block(tokens, block_len);
-        let mut subtokens = vec![];
-        if positions[0].0 > 1 {
-            // println!("..");
-            subtokens.push(&tokens[..positions[0].0 - 1]);
-        } else {
-            // println!("...");
-            subtokens.push(&[]);
-        }
-        for (left, right) in positions.iter().tuple_windows() {
-            if left.1 + 1 > right.0 - 1 {
-                // println!("!!");
-                subtokens.push(&[]);
-            } else {
-                // println!("!!!");
-
-                subtokens.push(&tokens[left.1 + 1..right.0 - 1]);
-            }
-        }
-        if positions.last().expect("last position").1 < tokens.len() - 1 {
-            // println!("!!!!");
-
-            subtokens.push(&tokens[positions.last().expect("last position").1 + 1..]);
-        } else {
-            // println!("!!!!!!");
-
-            subtokens.push(&[]);
-        }
-
-        // dbg!(&subseq);
-        // dbg!(&subtokens);
-        assert_eq!(subseq.len(), subtokens.len());
-
-        Some(subtokens.into_iter().zip(subseq.into_iter()).collect_vec())
-    })
 }
 
 fn simplify<'a>(tokens: &'a [Token], seq: &'a [u8]) -> (&'a [Token], &'a [u8]) {
@@ -759,31 +443,19 @@ fn match_back<'a>(mut tokens: &'a [Token], mut seq: &'a [u8]) -> (&'a [Token], &
     (tokens, seq)
 }
 
-fn space_can_fit(length: u8, seq: &[u8]) -> bool {
-    seq.iter().map(|&num| num as usize).sum::<usize>() + seq.len() - 1 <= length as usize
-}
-
 // it is an incomplete guess
 fn tokens_can_fit(tokens: &[Token], seq: &[u8]) -> bool {
     tokens.iter().filter(|t| !t.is_empty()).count()
         >= seq.iter().map(|&num| num as usize).sum::<usize>()
-}
-
-// assuming .??????. the connected token is either empty or ends.
-fn space(length: u8, seq: &[u8]) -> u64 {
-    if space_can_fit(length, seq) {
-        todo!();
-    } else {
-        0
-    }
 }
 // endregion: --- Part 2
 
 #[cfg(test)]
 mod tests {
     use rstest::rstest;
+    use rstest_reuse::{self, *};
 
-    use crate::{parser::tokens, token::print_tokens};
+    use crate::parser::tokens;
 
     use super::*;
 
@@ -805,9 +477,8 @@ mod tests {
     #[case(10, "??????? 2,1")]
     fn test_combinations(#[case] expected: u64, #[case] fixture: &str) {
         let (_, (tokens, seq)) = parse_line2(fixture).expect("parse ok");
-        
-        assert_eq!(expected, combinations(tokens, seq))
 
+        assert_eq!(expected, combinations(tokens, seq))
     }
 
     #[rstest]
@@ -834,14 +505,6 @@ mod tests {
         let (_, tokens) = tokens(fixture).expect("parse ok");
 
         assert_eq!(expected, longest_substring_of_nonempty(&tokens))
-    }
-
-    #[rstest]
-    #[case(true, 3, &[1, 1])]
-    #[case(false, 3, &[1, 2])]
-    #[case(true, 8, &[1, 2, 3])]
-    fn test_space_can_fit(#[case] expected: bool, #[case] space: u8, #[case] seq: &[u8]) {
-        assert_eq!(expected, space_can_fit(space, seq))
     }
 
     #[rstest]
@@ -890,67 +553,6 @@ mod tests {
     }
 
     #[rstest]
-    #[case("###.###.##.###")]
-    #[case("##############")]
-    fn test_positions_of_sequence_of_block(#[case] fixture: &str) {
-        let (_, tokens) = tokens(fixture).expect("parse ok");
-
-        println!("{:?}", positions_of_sequence_of_block(&tokens, 3));
-    }
-
-    #[rstest]
-    #[case("???.###.???###..??? 1,3,3,1")]
-    #[case("???.###????.###????.###????.###????.### 1,1,3,1,1,3,1,1,3,1,1,3,1,1,3")]
-    #[case("###.### 3,3")]
-    #[case("###..### 3,3")]
-    #[case("###.?.### 3,1,3")]
-    #[case("???.###.???..??? 1,3,3,1")]
-    fn test_try_candy_twisting(#[case] fixture: &str) {
-        let (_, (tokens, seq)) = parse_line2(fixture).expect("parse ok");
-
-        let Some(pairs) = try_candy_twisting(&tokens, &seq) else {
-            panic!("should success")
-        };
-
-        for pair in pairs {
-            println!("{}, {:?}", print_tokens(pair.0), pair.1);
-        }
-    }
-
-    #[rstest]
-    #[case("???.###.???..??? 1,3,3,1")]
-    fn test_try_candy_twisting_uncertain(#[case] fixture: &str) {
-        let (_, (tokens, seq)) = parse_line2(fixture).expect("parse ok");
-
-        let Some(pairs) = try_candy_twisting_uncertain(&tokens, &seq) else {
-            panic!("should success")
-        };
-
-        for pair in pairs {
-            println!("{}, {:?}", print_tokens(pair.0), pair.1);
-        }
-    }
-
-    #[test]
-    fn quick_test() {
-        println!(
-            "{:?}",
-            all_permutations_of_gears(b"?.?")
-                .iter()
-                .map(|bytes| std::str::from_utf8(bytes).unwrap())
-                .collect::<Vec<&str>>()
-        );
-
-        // println!(
-        //     "{:?}",
-        //     all_permutations_of_gears(b"???????")
-        //         .iter()
-        //         .map(|bytes| std::str::from_utf8(bytes).unwrap())
-        //         .collect::<Vec<&str>>()
-        // );
-    }
-
-    #[rstest]
     #[case(1,2, &[])]
     #[case(2,2,&[1])]
     #[case(1,2,&[2])]
@@ -966,14 +568,6 @@ mod tests {
         #[case] arrangement: &[u32],
     ) {
         assert_eq!(expected, free_arrangement(free_space, arrangement));
-    }
-
-    #[rstest]
-    #[case(true, b".#.##.###", &[1, 2,3])]
-    #[case(false, b".##.##.###", &[1, 2,3])]
-    #[case(false, b".######", &[1, 2,3])]
-    fn test_fulfill(#[case] expected: bool, #[case] space: &[u8], #[case] arrangement: &[u32]) {
-        assert_eq!(expected, fulfill(space, arrangement));
     }
 
     #[rstest]
@@ -997,63 +591,24 @@ mod tests {
         assert_eq!(expected, can_substitute(space, hash_len))
     }
 
+    #[template]
     #[rstest]
-    // #[case(0, " 3,2,1")]
-    // #[case(1, "???.### 1,1,3")]
-    // #[case(0, ".??.### 1,1,3")]
-    // #[case(1, "#??.### 1,1,3")]
-    // #[case(1, "#?#.### 1,1,3")]
-    // #[case(4, ".??..??...?##. 1,1,3")]
-    // #[case(1, "?#?#?#?#?#?#?#? 1,3,1,6")]
-    // #[case(1, "????.#...#... 4,1,1")]
-    // #[case(4, "????.######..#####. 1,6,5")]
-    // #[case(10, "?###???????? 3,2,1")]
-    // #[case(10, ".###???????? 3,2,1")]
-    // #[case(0, "####???????? 3,2,1")]
-    // #[case(10, "###???????? 3,2,1")]
-    // #[case(10, "###.??????? 3,2,1")]
-    // #[case(10, "??????? 2,1")]
-    #[case(3, "#??#??????? 7,1")]
-    fn test_possible_arrangement_using_fulfill(#[case] expected: u32, #[case] input: &str) {
-        let (_, (space, arrangement)) = parse_line(input).expect("parse correct");
-
-        let all_perms = all_permutations_of_gears(&space);
-        println!("{}", all_perms.len());
-
-        let satisfied = all_perms
-            .iter()
-            // .map(|v| {
-            //     println!("{:?}", std::str::from_utf8(v).unwrap());
-            //     v
-            // })
-            .filter(|s| fulfill(s, &arrangement))
-            .map(|v| {
-                println!("{:?}", std::str::from_utf8(v).unwrap());
-                v
-            })
-            .count();
-        assert_eq!(expected, satisfied as u32);
-    }
-
-    // #[rstest]
-    // #[case(0, " 3,2,1")]
-    // #[case(1, "???.### 1,1,3")]
-    // #[case(0, ".??.### 1,1,3")]
-    // #[case(1, "#??.### 1,1,3")]
-    // #[case(1, "#?#.### 1,1,3")]
-    // #[case(4, ".??..??...?##. 1,1,3")]
-    // #[case(1, "?#?#?#?#?#?#?#? 1,3,1,6")]
-    // #[case(1, "????.#...#... 4,1,1")]
-    // #[case(4, "????.######..#####. 1,6,5")]
-    // #[case(10, "?###???????? 3,2,1")]
-    // #[case(10, ".###???????? 3,2,1")]
-    // #[case(0, "####???????? 3,2,1")]
-    // #[case(10, "###???????? 3,2,1")]
-    // #[case(10, "###.??????? 3,2,1")]
-    // #[case(10, "??????? 2,1")]
-    // #[case(22150361247847371, "?????????????????????????????????????????????????????????????????????????????????????????? 2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1")]
-    // #[case(22150361247847371, "??????????????????????????????????????????????????????????????????????????????????????????. 2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1")]
-    // fn test_possible_arrangement(#[case] expected: u64, #[case] input: &str) {
-    //     assert_eq!(expected, possible_arrangement(input));
-    // }
+    #[case(0, " 3,2,1")]
+    #[case(1, "???.### 1,1,3")]
+    #[case(0, ".??.### 1,1,3")]
+    #[case(1, "#??.### 1,1,3")]
+    #[case(1, "#?#.### 1,1,3")]
+    #[case(4, ".??..??...?##. 1,1,3")]
+    #[case(1, "?#?#?#?#?#?#?#? 1,3,1,6")]
+    #[case(1, "????.#...#... 4,1,1")]
+    #[case(4, "????.######..#####. 1,6,5")]
+    #[case(10, "?###???????? 3,2,1")]
+    #[case(10, ".###???????? 3,2,1")]
+    #[case(0, "####???????? 3,2,1")]
+    #[case(10, "###???????? 3,2,1")]
+    #[case(10, "###.??????? 3,2,1")]
+    #[case(10, "??????? 2,1")]
+    #[case(22150361247847371, "?????????????????????????????????????????????????????????????????????????????????????????? 2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1")]
+    #[case(22150361247847371, "??????????????????????????????????????????????????????????????????????????????????????????. 2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1")]
+    fn sample_test_cases(#[case] expected: u64, #[case] input: &str) {}
 }

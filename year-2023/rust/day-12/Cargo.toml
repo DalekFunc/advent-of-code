@@ -12,6 +12,7 @@ cached = "0.46.1"
 itertools.workspace = true
 nom.workspace = true
 rayon.workspace = true
+rstest_reuse = "0.6.0"
 
 [dev-dependencies]
 rstest.workspace = true
