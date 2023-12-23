@@ -73,9 +73,7 @@ pub fn parse_file(input: &str) -> IResult<&str, (HashMap<&str, Workflow>, Vec<Pa
     let (input, workflows) = separated_list1(newline, workflow)(input)?;
     let (rest, parts) = preceded(tag("\n\n"), separated_list1(newline, part))(input)?;
 
-    let workflows = HashMap::from_iter(
-        workflows.into_iter().map(|w| (w.name, w))
-    );
+    let workflows = HashMap::from_iter(workflows.into_iter().map(|w| (w.name, w)));
 
     Ok((rest, (workflows, parts)))
 }

@@ -78,73 +78,79 @@ impl<'a> Rule<'a> {
 
                         return (Some(satisfied), Some(rest));
                     }
-                },
-                Category::M => if range.m.end <= self.threshold {
-                    return (Some(range.clone()), None);
-                } else if range.m.start >= self.threshold {
-                    return (None, Some(range.clone()));
-                } else {
-                    let satisfied = PartRange {
-                        m: Range {
-                            start: range.m.start,
-                            end: self.threshold,
-                        },
-                        ..*range
-                    };
-                    let rest = PartRange {
-                        m: Range {
-                            start: self.threshold,
-                            end: range.m.end,
-                        },
-                        ..*range
-                    };
+                }
+                Category::M => {
+                    if range.m.end <= self.threshold {
+                        return (Some(range.clone()), None);
+                    } else if range.m.start >= self.threshold {
+                        return (None, Some(range.clone()));
+                    } else {
+                        let satisfied = PartRange {
+                            m: Range {
+                                start: range.m.start,
+                                end: self.threshold,
+                            },
+                            ..*range
+                        };
+                        let rest = PartRange {
+                            m: Range {
+                                start: self.threshold,
+                                end: range.m.end,
+                            },
+                            ..*range
+                        };
 
-                    return (Some(satisfied), Some(rest));
-                },
-                Category::A => if range.a.end <= self.threshold {
-                    return (Some(range.clone()), None);
-                } else if range.a.start >= self.threshold {
-                    return (None, Some(range.clone()));
-                } else {
-                    let satisfied = PartRange {
-                        a: Range {
-                            start: range.a.start,
-                            end: self.threshold,
-                        },
-                        ..*range
-                    };
-                    let rest = PartRange {
-                        a: Range {
-                            start: self.threshold,
-                            end: range.a.end,
-                        },
-                        ..*range
-                    };
+                        return (Some(satisfied), Some(rest));
+                    }
+                }
+                Category::A => {
+                    if range.a.end <= self.threshold {
+                        return (Some(range.clone()), None);
+                    } else if range.a.start >= self.threshold {
+                        return (None, Some(range.clone()));
+                    } else {
+                        let satisfied = PartRange {
+                            a: Range {
+                                start: range.a.start,
+                                end: self.threshold,
+                            },
+                            ..*range
+                        };
+                        let rest = PartRange {
+                            a: Range {
+                                start: self.threshold,
+                                end: range.a.end,
+                            },
+                            ..*range
+                        };
 
-                    return (Some(satisfied), Some(rest));
-                },
-                Category::S => if range.s.end <= self.threshold {
-                    return (Some(range.clone()), None);
-                } else if range.s.start >= self.threshold {
-                    return (None, Some(range.clone()));
-                } else {
-                    let satisfied = PartRange {
-                        s: Range {
-                            start: range.s.start,
-                            end: self.threshold,
-                        },
-                        ..*range
-                    };
-                    let rest = PartRange {
-                        s: Range {
-                            start: self.threshold,
-                            end: range.s.end,
-                        },
-                        ..*range
-                    };
+                        return (Some(satisfied), Some(rest));
+                    }
+                }
+                Category::S => {
+                    if range.s.end <= self.threshold {
+                        return (Some(range.clone()), None);
+                    } else if range.s.start >= self.threshold {
+                        return (None, Some(range.clone()));
+                    } else {
+                        let satisfied = PartRange {
+                            s: Range {
+                                start: range.s.start,
+                                end: self.threshold,
+                            },
+                            ..*range
+                        };
+                        let rest = PartRange {
+                            s: Range {
+                                start: self.threshold,
+                                end: range.s.end,
+                            },
+                            ..*range
+                        };
 
-                    return (Some(satisfied), Some(rest));
-                },
+                        return (Some(satisfied), Some(rest));
+                    }
+                }
             },
             Comparison::GreaterThan => match self.cat {
                 Category::X => {
@@ -169,7 +175,7 @@ impl<'a> Rule<'a> {
                         };
                         return (Some(satisfied), Some(rest));
                     }
-                },
+                }
                 Category::M => {
                     if range.m.start >= self.threshold {
                         return (Some(range.clone()), None);
@@ -192,7 +198,7 @@ impl<'a> Rule<'a> {
                         };
                         return (Some(satisfied), Some(rest));
                     }
-                },
+                }
                 Category::A => {
                     if range.a.start >= self.threshold {
                         return (Some(range.clone()), None);
@@ -215,7 +221,7 @@ impl<'a> Rule<'a> {
                         };
                         return (Some(satisfied), Some(rest));
                     }
-                },
+                }
                 Category::S => {
                     if range.s.start >= self.threshold {
                         return (Some(range.clone()), None);
@@ -238,7 +244,7 @@ impl<'a> Rule<'a> {
                         };
                         return (Some(satisfied), Some(rest));
                     }
-                },
+                }
             },
         }
     }
