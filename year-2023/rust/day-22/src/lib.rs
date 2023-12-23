@@ -1,29 +1,20 @@
-#![allow(unused)]
-use std::{
-    collections::{HashMap, HashSet},
-    mem,
-};
-
-use anyhow::{anyhow, Result};
-use itertools::Itertools;
+// --- region: Modules
+use crate::brick::{z_order, Brick, Orientation};
+use anyhow::Result;
 use parser::parse_file;
-
-use crate::{
-    brick::{z_order, Brick, Orientation},
-    parser::block,
-};
+use std::collections::{HashMap, HashSet};
 
 mod brick;
 mod coordinates;
 mod parser;
-
 type BrickIndex = usize;
 type Relations = HashMap<BrickIndex, HashSet<BrickIndex>>;
+// --- endregion: Modules
 
 pub fn part1(input: &str) -> Result<u64> {
-    let (_, mut bricks) = parse_file(input).expect("parse ok");
+    let (_, bricks) = parse_file(input).expect("parse ok");
 
-    let (top_layers, supporting, supported_by, _) = build_data_structures(bricks);
+    let (supporting, supported_by, _) = build_data_structures(bricks);
 
     let mut count = 0;
     for (_, bricks_above) in supporting {
@@ -42,13 +33,11 @@ pub fn part2(input: &str) -> Result<u64> {
     let (_, bricks) = parse_file(input).expect("parse ok");
     let total = bricks.len();
 
-    let (top_layers, supporting, supported_by, lowest_z) = build_data_structures(bricks);
+    let (supporting, supported_by, lowest_z) = build_data_structures(bricks);
 
     let mut count = 0;
     for idx in 0..total {
-        let mut fall = HashSet::from([idx]);
-
-        count += count_would_fall(&supporting, &supported_by, &lowest_z, &mut fall, idx);
+        count += count_would_fall(&supporting, &supported_by, &lowest_z, idx);
     }
 
     Ok(count)
@@ -89,21 +78,14 @@ fn land_on(
 
 fn build_data_structures(
     mut bricks: Vec<Brick>,
-) -> (
-    HashMap<(u32, u32), (BrickIndex, u32)>,
-    Relations,
-    Relations,
-    HashMap<BrickIndex, u32>,
-) {
+) -> (Relations, Relations, HashMap<BrickIndex, u32>) {
     bricks.sort_by(z_order);
 
     // record the current top most block foreach xy.
-    let mut top_layers: HashMap<(u32, u32), (BrickIndex, u32)> = HashMap::new(); // (x, y -> z layer)
-
-    let mut supporting: Relations = HashMap::new(); // (A: {B, C})
+    let mut top_layers: HashMap<(u32, u32), (BrickIndex, u32)> = HashMap::new();
+    let mut supporting: Relations = HashMap::new();
     let mut supported_by: Relations = HashMap::new();
-
-    let mut lowest_z: HashMap<BrickIndex, u32> = HashMap::new();
+    let mut lowest_z = HashMap::new();
 
     bricks.iter().enumerate().for_each(|(idx, brick)| {
         supporting.entry(idx).or_default();
@@ -147,14 +129,10 @@ fn build_data_structures(
         lowest_z.insert(idx, z);
     });
 
-    (top_layers, supporting, supported_by, lowest_z)
+    (supporting, supported_by, lowest_z)
 }
 
-fn would_fall(
-    supported_by: &Relations,
-    fall: &mut HashSet<BrickIndex>,
-    target: BrickIndex,
-) -> bool {
+fn would_fall(supported_by: &Relations, fall: &HashSet<BrickIndex>, target: BrickIndex) -> bool {
     supported_by[&target]
         .iter()
         .all(|supporter| fall.contains(supporter))
@@ -164,43 +142,37 @@ fn count_would_fall(
     supporting: &Relations,
     supported_by: &Relations,
     lowest_z: &HashMap<BrickIndex, u32>,
-    fall: &mut HashSet<BrickIndex>,
     target: BrickIndex,
 ) -> u64 {
     let mut count = 0;
 
     let mut descendants = Vec::from_iter(supporting[&target].iter().cloned());
-    let mut next_generation: HashSet<BrickIndex> = HashSet::new();
+    let mut next_generation = HashSet::new();
+    let mut fall = HashSet::from([target]);
     loop {
-        let mut has_next_gen = false;
-
         for de in descendants {
-            if would_fall(supported_by, fall, de) {
+            if would_fall(supported_by, &fall, de) {
                 fall.insert(de);
                 count += 1;
-
-                if !supporting[&de].is_empty() {
-                    next_generation.extend(supporting[&de].iter());
-                    has_next_gen = true;
-                }
+                next_generation.extend(supporting[&de].iter());
             }
         }
 
-        if !next_generation.is_empty() {
-            let next_gen = next_generation
-                .into_iter()
-                .sorted_by(|l, r| lowest_z[l].cmp(&lowest_z[r]))
-                .collect_vec();
-            let next_z = lowest_z[&next_gen[0]];
+        if next_generation.is_empty() {
+            break;
+        } else {
+            let next_z = next_generation
+                .iter()
+                .map(|idx| lowest_z[idx])
+                .min()
+                .expect("min");
 
-            let (next_des, next_gen): (Vec<_>, _) = next_gen
+            let (next_des, next_gen): (Vec<_>, _) = next_generation
                 .into_iter()
                 .partition(|idx| lowest_z[idx] == next_z);
 
             descendants = next_des;
             next_generation = HashSet::from_iter(next_gen);
-        } else {
-            break;
         }
     }
 
